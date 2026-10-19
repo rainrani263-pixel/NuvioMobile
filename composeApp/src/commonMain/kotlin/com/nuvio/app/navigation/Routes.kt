@@ -74,6 +74,9 @@ data class SettingsPageRoute(
 data class HomescreenSettingsRoute(override val title: String = "") : SettingsDestinationRoute
 
 @Serializable
+data class HomeCategorySettingsRoute(override val title: String = "Navigation categories") : SettingsDestinationRoute
+
+@Serializable
 data class MetaScreenSettingsRoute(override val title: String = "") : SettingsDestinationRoute
 
 @Serializable

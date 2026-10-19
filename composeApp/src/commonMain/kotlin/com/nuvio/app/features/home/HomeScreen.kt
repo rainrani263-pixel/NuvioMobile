@@ -889,8 +889,34 @@ fun HomeScreen(
     val sectionsMap = remember(homeUiState.sections) {
         homeUiState.sections.associateBy(HomeCatalogSection::key)
     }
-    val enabledHomeItems = remember(homeSettingsUiState.items) {
-        homeSettingsUiState.items.filter { it.enabled }
+    val homeCategoryState by HomeCategoryRepository.uiState.collectAsStateWithLifecycle()
+    val activeCategory = homeCategoryState.activeCategory
+    val activeCategoryId = homeCategoryState.effectiveActiveCategoryId
+    val enabledHomeItems = remember(homeSettingsUiState.items, activeCategory) {
+        homeSettingsUiState.items.filter { it.enabled && activeCategory.includes(it.key) }
+    }
+    val homeItemKeys = remember(homeSettingsUiState.items) { homeSettingsUiState.items.map { it.key } }
+    LaunchedEffect(homeItemKeys) {
+        HomeCategoryRepository.ensureLoaded()
+        HomeCategoryRepository.syncCatalogKeys(homeItemKeys)
+    }
+    val displayedHeroItems = remember(homeUiState.heroItems, homeUiState.sections, activeCategory) {
+        if (activeCategory.isHome()) {
+            homeUiState.heroItems
+        } else {
+            homeUiState.sections
+                .filter { section -> activeCategory.includes(section.key) }
+                .flatMap { section -> section.items }
+                .distinctBy { item -> item.stableKey() }
+                .take(8)
+        }
+    }
+    val previousCategoryId = remember { mutableStateOf(activeCategoryId) }
+    LaunchedEffect(activeCategoryId) {
+        if (previousCategoryId.value != activeCategoryId) {
+            previousCategoryId.value = activeCategoryId
+            homeListState.scrollToItem(0)
+        }
     }
     val keyedEnabledHomeItems = remember(enabledHomeItems) {
         enabledHomeItems.withDuplicateSafeLazyKeys(HomeCatalogSettingsItem::key)
@@ -925,7 +951,7 @@ fun HomeScreen(
     val hasRenderableHomeRows = homeUiState.sections.isNotEmpty() || hasRenderableCollectionRows
     val showHeroSlot = shouldShowHomeHeroSlot(
         heroEnabled = homeSettingsUiState.heroEnabled,
-        hasHeroItems = homeUiState.heroItems.isNotEmpty(),
+        hasHeroItems = displayedHeroItems.isNotEmpty(),
         isResolvingHeroSources = isResolvingHeroSources,
         hasRenderableHomeRows = hasRenderableHomeRows,
     )
@@ -935,7 +961,7 @@ fun HomeScreen(
         showHeroSlot = showHeroSlot,
     )
     val showHeroSkeleton = showHeroSlot &&
-        homeUiState.heroItems.isEmpty() &&
+        displayedHeroItems.isEmpty() &&
         isResolvingHeroSources
     val isInitialHomeContentLoading = shouldShowInitialHomeLoading(
         hasRenderableHomeRows = hasRenderableHomeRows,
@@ -990,6 +1016,29 @@ fun HomeScreen(
             topPadding = if (showHeroSlot) 0.dp else null,
             listState = homeListState,
         ) {
+            item(key = "home_category_bar", contentType = "category_bar") {
+                HomeCategoryBar(
+                    categories = homeCategoryState.navigableCategories,
+                    activeCategoryId = activeCategoryId,
+                    onSelect = { categoryId -> HomeCategoryRepository.setActiveCategory(categoryId) },
+                )
+            }
+
+            if (
+                !activeCategory.isHome() &&
+                !homeUiState.isLoading &&
+                !hasRenderableCollectionRows &&
+                enabledHomeItems.none { sectionsMap.containsKey(it.key) }
+            ) {
+                item(key = "home_category_empty", contentType = "empty") {
+                    HomeEmptyStateCard(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        title = "Nothing in ${activeCategory.label} yet",
+                        message = "Choose which catalogs appear here under Settings, Homescreen, Navigation categories.",
+                    )
+                }
+            }
+
             if (showHeroSlot) {
                 item(key = "home_hero", contentType = "hero") {
                     Crossfade(
@@ -1004,8 +1053,8 @@ fun HomeScreen(
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,
                             )
 
-                            homeUiState.heroItems.isNotEmpty() -> HomeHeroSection(
-                                items = homeUiState.heroItems,
+                            displayedHeroItems.isNotEmpty() -> HomeHeroSection(
+                                items = displayedHeroItems,
                                 modifier = Modifier,
                                 viewportHeight = maxHeight,
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,

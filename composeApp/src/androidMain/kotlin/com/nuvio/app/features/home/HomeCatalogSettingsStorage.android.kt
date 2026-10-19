@@ -7,6 +7,7 @@ import com.nuvio.app.core.storage.ProfileScopedKey
 actual object HomeCatalogSettingsStorage {
     private const val preferencesName = "nuvio_home_catalog_settings"
     private const val payloadKey = "catalog_settings_payload"
+    private const val categoriesPayloadKey = "category_settings_payload"
 
     private var preferences: SharedPreferences? = null
 
@@ -21,6 +22,16 @@ actual object HomeCatalogSettingsStorage {
         preferences
             ?.edit()
             ?.putString(ProfileScopedKey.of(payloadKey), payload)
+            ?.apply()
+    }
+
+    actual fun loadCategoriesPayload(): String? =
+        preferences?.getString(ProfileScopedKey.of(categoriesPayloadKey), null)
+
+    actual fun saveCategoriesPayload(payload: String) {
+        preferences
+            ?.edit()
+            ?.putString(ProfileScopedKey.of(categoriesPayloadKey), payload)
             ?.apply()
     }
 }

@@ -147,6 +147,7 @@ import com.nuvio.app.features.settings.AccountSettingsScreen
 import com.nuvio.app.features.settings.AddonsSettingsScreen
 import com.nuvio.app.features.settings.ContinueWatchingSettingsScreen
 import com.nuvio.app.features.settings.HomescreenSettingsScreen
+import com.nuvio.app.features.settings.HomeCategorySettingsScreen
 import com.nuvio.app.features.settings.LicensesAttributionsSettingsScreen
 import com.nuvio.app.features.settings.MetaScreenSettingsScreen
 import com.nuvio.app.features.settings.PluginsSettingsScreen
@@ -1577,7 +1578,15 @@ internal fun MainAppContent(
                 }
                 entry<HomescreenSettingsRoute> { route ->
                     SettingsDestination(route, navController) { onBack ->
-                        HomescreenSettingsScreen(onBack = onBack)
+                        HomescreenSettingsScreen(
+                            onBack = onBack,
+                            onCategoriesClick = { navController.navigate(HomeCategorySettingsRoute()) },
+                        )
+                    }
+                }
+                entry<HomeCategorySettingsRoute> { route ->
+                    SettingsDestination(route, navController) { onBack ->
+                        HomeCategorySettingsScreen(onBack = onBack)
                     }
                 }
                 entry<MetaScreenSettingsRoute> { route ->

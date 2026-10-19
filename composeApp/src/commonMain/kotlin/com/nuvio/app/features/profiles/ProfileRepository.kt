@@ -177,6 +177,7 @@ object ProfileRepository {
         StreamBadgeSettingsRepository.onProfileChanged()
         P2pSettingsRepository.onProfileChanged()
         HomeCatalogSettingsRepository.onProfileChanged()
+        com.nuvio.app.features.home.HomeCategoryRepository.onProfileChanged()
         HomeRepository.clear()
         MetaScreenSettingsRepository.onProfileChanged()
         com.nuvio.app.features.shuffle.EpisodeShuffleRepository.onProfileChanged()

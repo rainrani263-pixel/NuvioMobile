@@ -33,6 +33,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun HomescreenSettingsScreen(
     onBack: () -> Unit,
+    onCategoriesClick: () -> Unit = {},
 ) {
     val addonsUiState by AddonRepository.uiState.collectAsStateWithLifecycle()
     val homescreenCatalogRefreshKey = remember(addonsUiState.addons) {
@@ -70,6 +71,9 @@ fun HomescreenSettingsScreen(
                 title = stringResource(Res.string.compose_settings_page_homescreen),
                 onBack = onBack,
             )
+        }
+        item(key = "homescreen_categories_entry", contentType = "entry") {
+            HomeCategoriesEntryCard(onClick = onCategoriesClick)
         }
         homescreenSettingsContent(
             isTablet = false,
